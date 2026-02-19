@@ -8,5 +8,5 @@ import SwiftUI
 @Observable
 final class FlexibleHeaderGeometry {
     var offset: CGFloat = 0
-    var containerHeight: CGFloat = UIScreen.main.bounds.height
+    var containerHeight: CGFloat = 0
 }
