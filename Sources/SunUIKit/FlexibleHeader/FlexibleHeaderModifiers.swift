@@ -5,20 +5,30 @@ import SwiftUI
 // MARK: - ScrollView 修饰器
 
 /// 挂在 ScrollView 上，监听滚动几何变化并写入环境。
+/// 同时用 GeometryReader 读取 ScrollView 自身的容器高度，存入 FlexibleHeaderGeometry。
 struct FlexibleHeaderScrollViewModifier: ViewModifier {
     let configuration: FlexibleHeaderConfiguration
     @State private var geometry = FlexibleHeaderGeometry()
 
     func body(content: Content) -> some View {
-        content
-            .onScrollGeometryChange(for: CGFloat.self) { scrollGeo in
-                // 超出顶部时为负值，正常滚动时钳制为 0
-                min(scrollGeo.contentOffset.y + scrollGeo.contentInsets.top, 0)
-            } action: { _, newOffset in
-                geometry.offset = newOffset
-                fireProgressCallbackIfNeeded(offset: newOffset)
-            }
-            .environment(geometry)
+        GeometryReader { proxy in
+            content
+                // 读取 ScrollView 容器的真实高度，这里拿得到正确值
+                .onAppear {
+                    geometry.containerHeight = proxy.size.height
+                }
+                .onChange(of: proxy.size.height) { _, newHeight in
+                    geometry.containerHeight = newHeight
+                }
+                .onScrollGeometryChange(for: CGFloat.self) { scrollGeo in
+                    // 超出顶部时为负值，正常滚动时钳制为 0
+                    min(scrollGeo.contentOffset.y + scrollGeo.contentInsets.top, 0)
+                } action: { _, newOffset in
+                    geometry.offset = newOffset
+                    fireProgressCallbackIfNeeded(offset: newOffset)
+                }
+                .environment(geometry)
+        }
     }
 
     private func fireProgressCallbackIfNeeded(offset: CGFloat) {
@@ -27,14 +37,12 @@ struct FlexibleHeaderScrollViewModifier: ViewModifier {
             let maxH = configuration.maximumHeight
         else { return }
 
-        // offset 为负，stretch 为正
         let stretch = -offset
-        // 用固定基准高度计算，halfContainer 时以 300 兜底（回调场景建议用 fixed）
         let base: CGFloat
         if case .fixed(let h) = configuration.baseHeight {
             base = h
         } else {
-            base = 300
+            base = geometry.containerHeight / 2
         }
         let range = maxH - base
         guard range > 0 else { return }
@@ -45,27 +53,22 @@ struct FlexibleHeaderScrollViewModifier: ViewModifier {
 // MARK: - 头部内容修饰器
 
 /// 挂在头部视图上，根据滚动偏移动态调整高度和位置。
+/// 容器高度从环境中的 FlexibleHeaderGeometry 读取，避免在 LazyVStack 里用 GeometryReader 拿到 0 的问题。
 struct FlexibleHeaderContentModifier: ViewModifier {
     let configuration: FlexibleHeaderConfiguration
     @Environment(FlexibleHeaderGeometry.self) private var geometry
 
     func body(content: Content) -> some View {
-        GeometryReader { proxy in
-            let containerHeight = proxy.size.height > 0
-                ? proxy.size.height
-                : UIScreen.main.bounds.height
+        let height = resolvedHeight()
 
-            let height = resolvedHeight(containerHeight: containerHeight)
-
-            content
-                .frame(width: proxy.size.width, height: height, alignment: .center)
-                .padding(.bottom, geometry.offset)
-                .offset(y: geometry.offset)
-        }
+        content
+            .frame(height: height)
+            .padding(.bottom, geometry.offset)
+            .offset(y: geometry.offset)
     }
 
-    private func resolvedHeight(containerHeight: CGFloat) -> CGFloat {
-        let base = configuration.baseHeight.resolve(containerHeight: containerHeight)
+    private func resolvedHeight() -> CGFloat {
+        let base = configuration.baseHeight.resolve(containerHeight: geometry.containerHeight)
         // offset ≤ 0，减去它等于加上拉伸量
         var height = base - geometry.offset
 
