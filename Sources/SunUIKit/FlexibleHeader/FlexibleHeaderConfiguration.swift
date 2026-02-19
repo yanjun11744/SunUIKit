@@ -46,7 +46,7 @@ public struct FlexibleHeaderConfiguration: Sendable {
         baseHeight: BaseHeight = .halfContainer,
         maximumHeight: CGFloat? = nil,
         minimumHeight: CGFloat? = nil,
-        onStretchProgress: ((CGFloat) -> Void)? = nil
+        onStretchProgress: (@Sendable (CGFloat) -> Void)? = nil
     ) {
         self.baseHeight = baseHeight
         self.maximumHeight = maximumHeight
@@ -57,7 +57,7 @@ public struct FlexibleHeaderConfiguration: Sendable {
     // MARK: - BaseHeight
 
     /// 头部基准高度的计算方式。
-    public enum BaseHeight {
+    public enum BaseHeight: Sendable {
         /// 容器高度 / 2（默认行为）
         case halfContainer
         /// 固定像素值
@@ -83,7 +83,7 @@ public extension FlexibleHeaderConfiguration {
     static func clamped(
         baseHeight: BaseHeight = .halfContainer,
         max maximumHeight: CGFloat,
-        onProgress: ((CGFloat) -> Void)? = nil
+        onProgress: (@Sendable (CGFloat) -> Void)? = nil
     ) -> Self {
         FlexibleHeaderConfiguration(
             baseHeight: baseHeight,
