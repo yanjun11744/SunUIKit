@@ -5,6 +5,10 @@ import PackageDescription
 
 let package = Package(
     name: "SunUIKit",
+    platforms: [
+        .iOS(.v17),
+        .macOS(.v14)
+    ],
     products: [
         // Products define the executables and libraries a package produces, making them visible to other packages.
         .library(
@@ -18,6 +22,10 @@ let package = Package(
         .target(
             name: "SunUIKit"
         ),
-
+        .testTarget(
+            name: "SunUIKitTests",
+            dependencies: ["SunUIKit"],
+            path: "Tests/SunUIKitTests"
+        ),
     ]
 )
