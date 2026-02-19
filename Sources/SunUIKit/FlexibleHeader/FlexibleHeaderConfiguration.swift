@@ -20,7 +20,7 @@ import SwiftUI
 /// .flexibleHeaderScrollView(configuration: config)
 /// .flexibleHeaderContent(configuration: config)
 /// ```
-public struct FlexibleHeaderConfiguration {
+public struct FlexibleHeaderConfiguration: Sendable {
 
     // MARK: - 高度
 
@@ -38,7 +38,7 @@ public struct FlexibleHeaderConfiguration {
     /// 拉伸进度回调，仅在用户下拉超出顶部时触发。
     /// - 0.0：静止状态
     /// - 1.0：拉伸到 `maximumHeight`（需设置才有意义）
-    public var onStretchProgress: ((CGFloat) -> Void)?
+    public var onStretchProgress: (@Sendable (CGFloat) -> Void)?
 
     // MARK: - Init
 
