@@ -63,7 +63,7 @@ public struct FlexibleHeaderConfiguration: Sendable {
         /// 固定像素值
         case fixed(CGFloat)
 
-        func resolve(containerHeight: CGFloat) -> CGFloat {
+        public func resolve(containerHeight: CGFloat) -> CGFloat {
             switch self {
             case .halfContainer: return containerHeight / 2
             case .fixed(let h):  return h
